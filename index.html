@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1" />
+  <title>Mobile 3D Text & Logo Studio</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #1a1024 0%, #09090f 48%, #050507 100%);
+      font-family: Arial, sans-serif;
+      color: #fff;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+    }
+
+    .ui {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      top: 12px;
+      z-index: 20;
+      display: grid;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .topbar, .panel {
+      pointer-events: auto;
+      background: rgba(18, 18, 26, 0.84);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.28);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      background: linear-gradient(90deg, #ff4d7d, #ffb7cc, #8bd3ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      font-size: 0.82rem;
+      color: #bfbfd0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tabbtn, .action, .smallbtn {
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      color: #f4f4f7;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .tabbtn.active {
+      background: linear-gradient(135deg, rgba(255,77,125,0.32), rgba(139,211,255,0.18));
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .panel {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .hidden { display: none !important; }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: #bfbfd0;
+    }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .row > * { flex: 1 1 auto; }
+
+    .mini {
+      font-size: 0.78rem;
+      color: #bfbfd0;
+      line-height: 1.35;
+    }
+
+    .drawwrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    #draw {
+      width: 100%;
+      height: 240px;
+      border-radius: 16px;
+      background: #fff;
+      touch-action: none;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .footerhint {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 20;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(10,10,14,0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #e9e9f1;
+      font-size: 0.86rem;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
+      color: #bfbfd0;
+      user-select: none;
+    }
+
+    .toggle input { transform: scale(1.1); }
+
+    @media (max-width: 720px) {
+      .topbar { grid-template-columns: 1fr; }
+      .tabs { justify-content: flex-start; }
+      .grid.two { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- THREE.JS + OLD STYLE EXAMPLES (MODULE EMAS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/loaders/FontLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/geometries/TextGeometry.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/loaders/SVGLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/loaders/RGBELoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="ui">
+    <div class="topbar">
+      <div class="title">
+        <h1>Mobile 3D Text & Logo Studio</h1>
+        <p>Matn, logo va chizmani 3D qilish uchun mobilga mos sahifa</p>
+      </div>
+      <div class="tabs">
+        <button class="tabbtn active" data-tab="text">Text</button>
+        <button class="tabbtn" data-tab="logo">Logo</button>
+        <button class="tabbtn" data-tab="draw">Draw</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-text">
+      <div class="grid two">
+        <label>Matn
+          <input id="textInput" type="text" value="Lorduzb38" maxlength="30" />
+        </label>
+        <label>Font style
+          <select id="fontStyle">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid two">
+        <label>O‘lcham
+          <input id="textSize" type="range" min="0.5" max="2.2" step="0.01" value="1.25" />
+        </label>
+        <label>Qalinlik
+          <input id="textDepth" type="range" min="0.05" max="0.8" step="0.01" value="0.22" />
+        </label>
+      </div>
+      <div class="grid two">
+        <label>Rang
+          <input id="textColor" type="color" value="#ff4d7d" style="height:44px;border:none;background:transparent;" />
+        </label>
+        <label>Yorug‘lik
+          <input id="textGlow" type="range" min="0" max="2" step="0.01" value="0.65" />
+        </label>
+      </div>
+      <div class="row">
+        <button class="action" id="makeText">3D Text yaratish</button>
+        <button class="action" id="resetCamera">Kamerani reset</button>
+        <button class="action" id="clearScene">Tozalash</button>
+      </div>
+      <div class="mini">Font internetdan yuklanadi. Agar internet bo‘lmasa text chiqmasligi mumkin.</div>
+    </div>
+
+    <div class="panel hidden" id="panel-logo">
+      <div class="grid two">
+        <label>Logo fayl
+          <input id="logoFile" type="file" accept="image/*,.svg" />
+        </label>
+        <label>Mode
+          <select id="logoMode">
+            <option value="svg">SVG bo‘lsa extrude</option>
+            <option value="relief">PNG/JPG relief</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid two">
+        <label>Qalinlik / Depth
+          <input id="logoDepth" type="range" min="0.03" max="0.7" step="0.01" value="0.18" />
+        </label>
+        <label>Scale
+          <input id="logoScale" type="range" min="0.5" max="3" step="0.01" value="1.2" />
+        </label>
+      </div>
+      <div class="row">
+        <label class="toggle"><input id="logoOnPlinth" type="checkbox" checked /> plinth ustiga qo‘yish</label>
+        <button class="action" id="makeLogo">3D Logo yaratish</button>
+      </div>
+      <div class="mini">SVG bo‘lsa shape extrude bo‘ladi. PNG/JPG bo‘lsa relief chiqadi.</div>
+    </div>
+
+    <div class="panel hidden" id="panel-draw">
+      <div class="drawwrap">
+        <canvas id="draw"></canvas>
+        <div class="grid two">
+          <label>Brush size
+            <input id="brushSize" type="range" min="2" max="42" step="1" value="10" />
+          </label>
+          <label>Depth
+            <input id="drawDepth" type="range" min="0.03" max="0.8" step="0.01" value="0.15" />
+          </label>
+        </div>
+        <div class="grid two">
+          <label>Brush color
+            <input id="brushColor" type="color" value="#111111" style="height:44px;border:none;background:transparent;" />
+          </label>
+          <label>Background
+            <input id="drawBg" type="color" value="#ffffff" style="height:44px;border:none;background:transparent;" />
+          </label>
+        </div>
+        <div class="row">
+          <button class="smallbtn" id="clearDraw">Chizmani tozalash</button>
+          <button class="action" id="makeDraw">Chizmani 3D qilish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footerhint">Barmoq bilan aylantiring • Ikki barmoq bilan zoom</div>
+
+  <script>
+    const app = document.getElementById('app');
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x09080d, 8, 30);
+    scene.background = new THREE.Color(0x09080d);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 6.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    app.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 2.2;
+    controls.maxDistance = 14;
+    controls.minPolarAngle = 0.7;
+    controls.maxPolarAngle = 1.62;
+    controls.target.set(0, 0.8, 0);
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.45;
+    controls.enablePan = false;
+
+    const composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    composer.addPass(new THREE.UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.55, 0.45, 0.18
+    ));
+
+    const ambient = new THREE.HemisphereLight(0xffcfe0, 0x140b17, 1.5);
+    scene.add(ambient);
+
+    const key = new THREE.DirectionalLight(0xffffff, 2.3);
+    key.position.set(4, 8, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    scene.add(key);
+
+    const rim = new THREE.PointLight(0xff4d7d, 2.0, 25);
+    rim.position.set(-3.5, 2.5, -2.5);
+    scene.add(rim);
+
+    const fill = new THREE.PointLight(0x9ad7ff, 1.2, 25);
+    fill.position.set(3, 1.8, 3);
+    scene.add(fill);
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x0f0d13,
+        roughness: 0.26,
+        metalness: 0.34
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.65;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(18, 36, 0x5b4660, 0x2b2230);
+    grid.position.y = -1.64;
+    grid.material.opacity = 0.35;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    let currentGroup = null;
+    let font = null;
+    let currentMode = 'text';
+
+    const clock = new THREE.Clock();
+    const pointer = new THREE.Vector2(0, 0);
+    const targetCam = new THREE.Vector3(0, 1.6, 6.6);
+    const smoothCam = new THREE.Vector3(0, 1.6, 6.6);
+
+    const tabs = [...document.querySelectorAll('.tabbtn')];
+    const panels = {
+      text: document.getElementById('panel-text'),
+      logo: document.getElementById('panel-logo'),
+      draw: document.getElementById('panel-draw')
+    };
+
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      Object.entries(panels).forEach(([k, el]) => el.classList.toggle('hidden', k !== tab));
+      currentMode = tab;
+      if (tab === 'draw') resizeDrawCanvas();
+    }));
+
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    });
+
+    function loadFont() {
+      return new Promise((resolve, reject) => {
+        const loader = new THREE.FontLoader();
+        loader.load(
+          'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+          resolve,
+          undefined,
+          reject
+        );
+      });
+    }
+
+    function clearCurrent() {
+      if (!currentGroup) return;
+      scene.remove(currentGroup);
+      currentGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
+      currentGroup = null;
+    }
+
+    function makePlinth() {
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.25, 1.35, 0.35, 40),
+        new THREE.MeshStandardMaterial({ color: 0x14131a, roughness: 0.55, metalness: 0.2 })
+      );
+      base.castShadow = true;
+      base.receiveShadow = true;
+      base.position.y = -0.95;
+      g.add(base);
+
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.35, 0.06, 12, 64),
+        new THREE.MeshStandardMaterial({ color: 0xff4d7d, emissive: 0x22000d, emissiveIntensity: 0.9 })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = -0.74;
+      g.add(ring);
+      return g;
+    }
+
+    async function create3DText() {
+      if (!font) font = await loadFont();
+      clearCurrent();
+
+      const text = document.getElementById('textInput').value.trim() || 'Text';
+      const size = parseFloat(document.getElementById('textSize').value);
+      const depth = parseFloat(document.getElementById('textDepth').value);
+      const color = document.getElementById('textColor').value;
+      const glow = parseFloat(document.getElementById('textGlow').value);
+
+      const geometry = new THREE.TextGeometry(text, {
+        font: font,
+        size: size,
+        height: depth,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: depth * 0.35,
+        bevelSize: depth * 0.14,
+        bevelSegments: 4
+      });
+
+      geometry.computeBoundingBox();
+      geometry.center();
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.34,
+        metalness: 0.15,
+        emissive: new THREE.Color(color),
+        emissiveIntensity: glow * 0.28
+      });
+
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.position.y = 0.05;
+
+      const group = new THREE.Group();
+      group.add(mesh);
+      group.add(makePlinth());
+      group.position.y = 0.1;
+
+      scene.add(group);
+      currentGroup = group;
+
+      controls.target.set(0, 0.8, 0);
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.45;
+    }
+
+    async function createLogo3D() {
+      clearCurrent();
+      const file = document.getElementById('logoFile').files[0];
+      if (!file) {
+        alert('Logo faylini tanlang');
+        return;
+      }
+
+      const scale = parseFloat(document.getElementById('logoScale').value);
+      const depth = parseFloat(document.getElementById('logoDepth').value);
+      const mode = document.getElementById('logoMode').value;
+      const onPlinth = document.getElementById('logoOnPlinth').checked;
+
+      const group = new THREE.Group();
+      let added = false;
+
+      if (mode === 'svg' && file.name.toLowerCase().endsWith('.svg')) {
+        const svgText = await file.text();
+        const loader = new THREE.SVGLoader();
+        const data = loader.parse(svgText);
+
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.42,
+          metalness: 0.12,
+          side: THREE.DoubleSide
+        });
+
+        const shapes = [];
+        for (const path of data.paths) {
+          shapes.push(...THREE.SVGLoader.createShapes(path));
+        }
+
+        if (shapes.length) {
+          const geo = new THREE.ExtrudeGeometry(shapes, {
+            depth: depth,
+            bevelEnabled: true,
+            bevelThickness: depth * 0.22,
+            bevelSize: depth * 0.08,
+            bevelSegments: 2,
+            curveSegments: 10
+          });
+          geo.center();
+
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.scale.setScalar(scale);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          group.add(mesh);
+          added = true;
+        }
+      }
+
+      if (!added) {
+        const texture = await fileToTexture(file);
+        const plane = new THREE.Mesh(
+          new THREE.PlaneGeometry(3.2 * scale, 3.2 * scale, 220, 220),
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            displacementMap: texture,
+            displacementScale: depth * 1.8,
+            roughness: 0.88,
+            metalness: 0.02,
+            transparent: true,
+            alphaTest: 0.05
+          })
+        );
+        plane.rotation.x = -0.05;
+        plane.castShadow = true;
+        plane.receiveShadow = true;
+        group.add(plane);
+      }
+
+      if (onPlinth) group.add(makePlinth());
+
+      group.position.y = 0.15;
+      scene.add(group);
+      currentGroup = group;
+      controls.target.set(0, 0.8, 0);
+    }
+
+    function fileToTexture(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const size = 1024;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+
+          const scale = Math.min(size / img.width, size / img.height) * 0.88;
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (size - w) / 2;
+          const y = (size - h) / 2;
+          ctx.drawImage(img, x, y, w, h);
+
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.encoding = THREE.sRGBEncoding;
+          tex.needsUpdate = true;
+
+          URL.revokeObjectURL(url);
+          resolve(tex);
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    const drawCanvas = document.getElementById('draw');
+    const dctx = drawCanvas.getContext('2d');
+    let drawing = false;
+    let last = null;
+
+    function resizeDrawCanvas() {
+      const rect = drawCanvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      drawCanvas.width = Math.floor(rect.width * dpr);
+      drawCanvas.height = Math.floor(rect.height * dpr);
+      dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      resetDrawBoard();
+    }
+
+    function resetDrawBoard() {
+      const bg = document.getElementById('drawBg').value;
+      dctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      dctx.fillStyle = bg;
+      dctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+      dctx.lineJoin = 'round';
+      dctx.lineCap = 'round';
+      dctx.strokeStyle = document.getElementById('brushColor').value;
+      dctx.lineWidth = parseInt(document.getElementById('brushSize').value, 10);
+    }
+
+    function getPos(e) {
+      const r = drawCanvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    drawCanvas.addEventListener('pointerdown', (e) => {
+      drawing = true;
+      drawCanvas.setPointerCapture(e.pointerId);
+      last = getPos(e);
+    });
+
+    drawCanvas.addEventListener('pointermove', (e) => {
+      if (!drawing) return;
+      const p = getPos(e);
+      dctx.strokeStyle = document.getElementById('brushColor').value;
+      dctx.lineWidth = parseInt(document.getElementById('brushSize').value, 10);
+      dctx.beginPath();
+      dctx.moveTo(last.x, last.y);
+      dctx.lineTo(p.x, p.y);
+      dctx.stroke();
+      last = p;
+    });
+
+    drawCanvas.addEventListener('pointerup', () => { drawing = false; last = null; });
+    drawCanvas.addEventListener('pointercancel', () => { drawing = false; last = null; });
+
+    async function createFromDraw() {
+      clearCurrent();
+      const texture = new THREE.CanvasTexture(drawCanvas);
+      texture.encoding = THREE.sRGBEncoding;
+      texture.needsUpdate = true;
+
+      const depth = parseFloat(document.getElementById('drawDepth').value);
+
+      const group = new THREE.Group();
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.2, 3.2, 220, 220),
+        new THREE.MeshStandardMaterial({
+          map: texture,
+          displacementMap: texture,
+          displacementScale: depth * 1.8,
+          roughness: 0.92,
+          metalness: 0.02,
+          transparent: true,
+          alphaTest: 0.05
+        })
+      );
+      plane.castShadow = true;
+      plane.receiveShadow = true;
+      group.add(plane);
+      group.add(makePlinth());
+      group.position.y = 0.15;
+
+      scene.add(group);
+      currentGroup = group;
+      controls.target.set(0, 0.8, 0);
+    }
+
+    document.getElementById('makeText').addEventListener('click', create3DText);
+    document.getElementById('makeLogo').addEventListener('click', createLogo3D);
+    document.getElementById('makeDraw').addEventListener('click', createFromDraw);
+    document.getElementById('clearScene').addEventListener('click', clearCurrent);
+    document.getElementById('resetCamera').addEventListener('click', () => {
+      camera.position.set(0, 1.6, 6.6);
+      controls.target.set(0, 0.8, 0);
+      controls.update();
+    });
+    document.getElementById('clearDraw').addEventListener('click', resetDrawBoard);
+    document.getElementById('drawBg').addEventListener('input', resetDrawBoard);
+    document.getElementById('brushColor').addEventListener('input', resetDrawBoard);
+    document.getElementById('brushSize').addEventListener('input', resetDrawBoard);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      targetCam.x = pointer.x * 0.55;
+      targetCam.y = 1.6 + pointer.y * 0.25;
+      smoothCam.lerp(targetCam, 0.035);
+      camera.position.lerp(smoothCam, 0.05);
+
+      if (currentGroup) {
+        currentGroup.rotation.y = Math.sin(t * 0.18) * 0.16;
+        currentGroup.position.y = 0.15 + Math.sin(t * 1.4) * 0.02;
+      }
+
+      controls.update();
+      composer.render();
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+      resizeDrawCanvas();
+    }
+
+    window.addEventListener('resize', onResize);
+
+    resizeDrawCanvas();
+    loadFont().then(f => font = f).catch(err => console.error('Font load error:', err));
+    resetDrawBoard();
+    animate();
+  </script>
+</body>
+</html>
